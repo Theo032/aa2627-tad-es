@@ -1,32 +1,84 @@
+const larghezzaCanvas = 800
+const altezzaCanvas = 600
+const dimensioneBase = 80
+const ampiezzaOscillazione = 30
+const margineCanvas = dimensioneBase + ampiezzaOscillazione
+const velocitaOscillazione = 0.05
+const velocitaDispersione = 0.25
+const tonalitaMassima = 360
+const formeDisponibili = ["cerchio", "quadrato", "triangolo"]
+
+let particelle = []
+let formaScelta
 let tono
 
 function setup() {
-    createCanvas(800, 600)
+    createCanvas(larghezzaCanvas, altezzaCanvas)
     colorMode(HSL)
-    tono = random(360)
-    background(20)
 }
 
 function draw() {
-    if (mouseIsPressed) {
-        stroke(100)
-        fill(tono, 100, 40)
-        let x = mouseX
-        let y = mouseY
-        let dx = 2
-        let dy = 2
-        for (let i = 0; i < 50; i = i + 1) {
-            x = x + dx
-            y = y + dy
-            //circle(x, y, (50-i)/2)
-            square(x, y, (50-i)/2)
-            if (random() < 0.1) {
-                dx = random(-10, 10)
-                dy = random(-10, 10)
+    background(20)
+
+    if (
+        mouseIsPressed &&
+        formaScelta &&
+        (mouseX !== pmouseX || mouseY !== pmouseY)
+    ) {
+        aggiungiParticella(mouseX, mouseY)
+    }
+
+    const particelleVisibili = []
+
+    for (const particella of particelle) {
+        particella.x = particella.x + particella.velocitaX
+        particella.y = particella.y + particella.velocitaY
+
+        if (
+            particella.x > -margineCanvas &&
+            particella.x < width + margineCanvas &&
+            particella.y > -margineCanvas &&
+            particella.y < height + margineCanvas
+        ) {
+            const dimensione = dimensioneBase + sin(frameCount * velocitaOscillazione + particella.fase) * ampiezzaOscillazione
+
+            stroke(100)
+            fill(particella.tono, 100, 40)
+
+            if (particella.forma === "cerchio") {
+                circle(particella.x, particella.y, dimensione)
+            } else if (particella.forma === "quadrato") {
+                square(particella.x - dimensione / 2, particella.y - dimensione / 2, dimensione)
+            } else {
+                triangle(
+                    particella.x, particella.y - dimensione / 2,
+                    particella.x - dimensione / 2, particella.y + dimensione / 2,
+                    particella.x + dimensione / 2, particella.y + dimensione / 2
+                )
             }
-        }
-        if (random() < 0.02) {  // due volte su cento...
-            tono = random()  // cambia il tono del riempimento
+
+            particelleVisibili.push(particella)
         }
     }
+
+    particelle = particelleVisibili
 }
+
+function mousePressed() {
+    formaScelta = random(formeDisponibili)
+    tono = random(tonalitaMassima)
+    aggiungiParticella(mouseX, mouseY)
+}
+
+function aggiungiParticella(x, y) {
+    particelle.push({
+        x: x,
+        y: y,
+        velocitaX: random(-velocitaDispersione, velocitaDispersione),
+        velocitaY: random(-velocitaDispersione, velocitaDispersione),
+        fase: random(TWO_PI),
+        forma: formaScelta,
+        tono: tono
+    })
+}
+
